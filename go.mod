@@ -1,4 +1,4 @@
-module intro-sqlite
+module Lab5_go
 
 go 1.25.0
 
