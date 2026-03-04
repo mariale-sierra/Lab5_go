@@ -3,13 +3,15 @@ package handlers
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"net"
 	"strings"
 	"database/sql"
+	"Lab5_go/db"
+	"Lab5_go/templates"
+	"os"
 )
 
-func Handle(conn net.Conn, db *sql.DB) {
+func Handle(conn net.Conn, database *sql.DB) {
 	defer conn.Close()
 
 	reader := bufio.NewReader(conn)
@@ -18,7 +20,6 @@ func Handle(conn net.Conn, db *sql.DB) {
 	if err != nil {
 		return
 	}
-	fmt.Println("Request:", requestLine)
 
 	parts := strings.Fields(requestLine)
 	if len(parts) < 2 {
@@ -28,8 +29,8 @@ func Handle(conn net.Conn, db *sql.DB) {
 	path := parts[1]
 
 	for {
-		line, err := reader.ReadString('\n')
-		if err != nil || line == "\r\n" {
+		line, _ := reader.ReadString('\n')
+		if line == "\r\n" {
 			break
 		}
 	}
@@ -37,72 +38,26 @@ func Handle(conn net.Conn, db *sql.DB) {
 	var body string
 	statusLine := "HTTP/1.1 200 OK\r\n"
 
-	if path == "/" {
+	if strings.HasPrefix(path, "/static/") {
+    ServeStatic(conn, path)
+	return
+	}
 
-		rows, err := db.Query("SELECT id, name, current_episode, total_episodes FROM series")
+	switch path {
+
+	case "/":
+		series, err := db.GetAllSeries(database)
 		if err != nil {
-			log.Println(err)
-			return
-		}
-		defer rows.Close()
-
-		body = `
-		<html>
-		<head>
-			<title>Series Tracker</title>
-			<style>
-				body { font-family: Arial, sans-serif; }
-				table { border-collapse: collapse; width: 60%; margin: auto; }
-				th, td { border: 1px solid black; padding: 8px; text-align: center; }
-				th { background-color: #fba6bd; }
-				h1 { text-align: center; }
-			</style>
-		</head>
-		<body>
-		<h1>Series Tracker</h1>
-		<table>
-		<tr>
-			<th>#</th>
-			<th>Name</th>
-			<th>Current</th>
-			<th>Total</th>
-			<th>Completa</th>
-		</tr>
-		`
-
-		for rows.Next() {
-			var id int
-			var name string
-			var current int
-			var total int
-
-			err := rows.Scan(&id, &name, &current, &total)
-			if err != nil {
-				log.Println(err)
-				continue
-			}
-
-			body += fmt.Sprintf(
-				"<tr><td>%d</td><td>%s</td><td>%d</td><td>%d</td><td><button onclick=\"markComplete(this)\">Complete</button></td></tr>",
-				id, name, current, total,
-			)
+			body = "<h1>Error interno</h1>"
+			statusLine = "HTTP/1.1 500 Internal Server Error\r\n"
+			break
 		}
 
-		body += `
-		</table>
-		<script>
-		function markComplete(button) {
-			const row = button.parentElement.parentElement;
-			row.style.backgroundColor = "#c8f7c5";
-		}
-		</script>
-		</body>
-		</html>
-		`
+		body = templates.RenderHome(series)
 
-	} else {
+	default:
 		statusLine = "HTTP/1.1 404 Not Found\r\n"
-		body = "<html><body><h1>404 Not Found</h1></body></html>"
+		body = "<h1>404 Not Found</h1>"
 	}
 
 	response := fmt.Sprintf(
@@ -113,4 +68,34 @@ func Handle(conn net.Conn, db *sql.DB) {
 	)
 
 	conn.Write([]byte(response))
+}
+
+func ServeStatic(conn net.Conn, path string) {
+
+    filePath := "." + path 
+
+    content, err := os.ReadFile(filePath)
+    if err != nil {
+        response := "HTTP/1.1 404 Not Found\r\n\r\n"
+        conn.Write([]byte(response))
+        return
+    }
+
+    contentType := "text/plain"
+
+    if strings.HasSuffix(path, ".css") {
+        contentType = "text/css"
+    } else if strings.HasSuffix(path, ".js") {
+        contentType = "application/javascript"
+    }
+
+    response := fmt.Sprintf(
+        "HTTP/1.1 200 OK\r\nContent-Type: %s\r\nContent-Length: %d\r\n\r\n",
+        contentType,
+        len(content),
+    )
+	fmt.Println("PATH:", path)
+
+    conn.Write([]byte(response))
+    conn.Write(content)
 }
