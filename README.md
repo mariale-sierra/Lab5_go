@@ -1,11 +1,11 @@
 # 📺 Lab5: Series Tracker
 
 Challenges desarrollados: 
-[Criterio Subjetivo] Estilos y css	10
-[Criterio Subjetivo] Por que su código de go esté propiamente ordenado en archivos 	15
-[Criterio Subjetivo] Por que su código de javascript esté ordenado en archivos	15
-Implementar un sistema de rating (5 estrellas o 0-10) usando su propia tabla de sqlite	40
-Actualizar sin reload	20
+- [Criterio Subjetivo] Estilos y css	10
+- [Criterio Subjetivo] Por que su código de go esté propiamente ordenado en archivos 	15
+- [Criterio Subjetivo] Por que su código de javascript esté ordenado en archivos	15
+- Implementar un sistema de rating (5 estrellas o 0-10) usando su propia tabla de sqlite	40
+- Actualizar sin reload	20
     
 ## 📁 Descripción de Carpetas y Archivos
 **main.go** 
