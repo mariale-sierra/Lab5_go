@@ -27,11 +27,11 @@ Lab5_go/
 ## 📁 Descripción de Carpetas y Archivos
 **main.go** 
 
-  -Punto de entrada del servidor.
+-Punto de entrada del servidor.
   
-  -Conexión a la base de datos.
+-Conexión a la base de datos.
   
-  -Inicializa el servidor en :8080.
+-Inicializa el servidor en :8080.
 
 **handlers/**
 
